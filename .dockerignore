@@ -1,0 +1,15 @@
+node_modules
+server/node_modules
+dist
+.git
+.claude
+.cursor
+.codex
+.impeccable
+scratch
+.env*
+*.md
+direction-contract.html
+# 13 MB raw GIS files, unused by the app
+src/data/india-states.json
+public/india-states.geojson

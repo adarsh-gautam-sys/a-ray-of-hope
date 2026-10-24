@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
 import { Heart, Shield, FileText, ArrowRight, Check } from 'lucide-react'
+import { post } from '../lib/api'
 
 const tiers = [
   {
@@ -54,6 +55,14 @@ export default function DonateCTA() {
   const [donateState, setDonateState] = useState('idle')
   const [donorName, setDonorName] = useState('')
   const [donorEmail, setDonorEmail] = useState('')
+  const [method, setMethod] = useState('UPI')
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState('')
+  const [reference, setReference] = useState('')
+
+  const amountInr =
+    selected === 'custom' ? Number(customAmount) : tiers.find((t) => t.id === selected)?.amount
+  const amountValid = Number.isInteger(amountInr) && amountInr >= 100
 
   const resolvedAmount =
     selected === 'custom'
@@ -61,13 +70,29 @@ export default function DonateCTA() {
       : tiers.find((t) => t.id === selected)?.label
 
   const handleDonateClick = () => {
-    if (selected === 'custom' && !customAmount) return
+    if (!amountValid) return
     setDonateState('checkout')
   }
 
-  const handleCheckoutSubmit = (e) => {
+  const handleCheckoutSubmit = async (e) => {
     e.preventDefault()
-    setDonateState('confirmed')
+    setSending(true)
+    setError('')
+    try {
+      const res = await post('/donations', {
+        name: donorName,
+        email: donorEmail,
+        amount: amountInr,
+        recurring,
+        method,
+      })
+      setReference(res.reference)
+      setDonateState('confirmed')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
@@ -210,7 +235,7 @@ export default function DonateCTA() {
                       id="donate-submit-cta"
                       className="w-full flex items-center justify-center gap-2.5 bg-saffron hover:bg-saffron-light text-canvas font-body font-bold text-base py-4 rounded-xl transition-all duration-200 hover:shadow-glow-gold disabled:opacity-40 disabled:cursor-not-allowed"
                       onClick={handleDonateClick}
-                      disabled={selected === 'custom' && !customAmount}
+                      disabled={!amountValid}
                       aria-label={`Donate ${resolvedAmount}`}
                     >
                       <Heart size={18} strokeWidth={2.5} aria-hidden="true" />
@@ -291,31 +316,40 @@ export default function DonateCTA() {
 
                       {/* Payment method selector */}
                       <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Payment method">
-                        {['UPI', 'Card', 'Net Banking'].map((method) => (
+                        {['UPI', 'Card', 'Net Banking'].map((m) => (
                           <button
-                            key={method}
+                            key={m}
                             type="button"
                             role="radio"
-                            aria-checked={donorEmail && method === 'UPI'}
-                            className="border border-canvas-border rounded-lg py-2.5 text-xs font-body font-medium text-fg-secondary hover:border-saffron/50 hover:text-cream-muted transition-all"
+                            aria-checked={method === m}
+                            onClick={() => setMethod(m)}
+                            className={`border rounded-lg py-2.5 text-xs font-body font-medium transition-all ${
+                              method === m
+                                ? 'border-saffron bg-saffron/10 text-saffron'
+                                : 'border-canvas-border text-fg-secondary hover:border-saffron/50 hover:text-cream-muted'
+                            }`}
                           >
-                            {method}
+                            {m}
                           </button>
                         ))}
                       </div>
 
+                      {error && (
+                        <p role="alert" className="text-red-400 text-sm font-body">{error}</p>
+                      )}
+
                       <button
                         type="submit"
                         className="w-full flex items-center justify-center gap-2.5 bg-saffron hover:bg-saffron-light text-canvas font-body font-bold text-base py-4 rounded-xl transition-all duration-200 hover:shadow-glow-gold disabled:opacity-40 disabled:cursor-not-allowed"
-                        disabled={!donorName || !donorEmail}
-                        aria-label={`Complete donation of ${resolvedAmount}`}
+                        disabled={!donorName || !donorEmail || sending}
+                        aria-label={`Confirm pledge of ${resolvedAmount}`}
                       >
                         <Heart size={18} strokeWidth={2.5} aria-hidden="true" />
-                        Pay {resolvedAmount} Securely
+                        {sending ? 'Sending…' : `Confirm pledge · ${resolvedAmount}`}
                       </button>
 
                       <p className="text-center text-fg-muted text-xs font-body">
-                        256-bit SSL encrypted · 80G receipt by email · Refundable within 24h
+                        No money is taken now · We'll email payment instructions
                       </p>
                     </form>
                   </motion.div>
@@ -341,12 +375,12 @@ export default function DonateCTA() {
                         Thank you{donorName ? `, ${donorName.split(' ')[0]}` : ''}!
                       </h3>
                       <p className="text-fg-secondary text-sm font-body leading-relaxed max-w-xs mx-auto">
-                        Your {recurring ? 'monthly' : ''} gift of <strong className="text-cream-muted">{resolvedAmount}</strong> will go directly to programme delivery. A receipt will be sent to <strong className="text-cream-muted">{donorEmail}</strong>.
+                        Your {recurring ? 'monthly ' : ''}pledge of <strong className="text-cream-muted">{resolvedAmount}</strong> is recorded. We'll email <strong className="text-cream-muted">{donorEmail}</strong> with payment instructions. No money has been taken yet.
                       </p>
                     </div>
                     <div className="w-full bg-canvas-surface border border-canvas-border rounded-xl px-4 py-3 text-left">
                       <p className="text-fg-muted text-xs font-body">
-                        80G certificate will be sent within 7 working days · Reference: #{Math.floor(Math.random() * 900000) + 100000}
+                        80G certificate is issued once payment is received · Reference: {reference}
                       </p>
                     </div>
                   </motion.div>

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { ArrowRight, Check, Mail } from 'lucide-react'
+import { post } from '../lib/api'
 
 const interests = [
   'Teaching', 'Event Support', 'Fundraising', 'Digital Marketing', 'Photography', 'Research',
@@ -19,8 +20,32 @@ export default function VolunteerCTA() {
   const [step, setStep] = useState(1)
   const [selectedInterests, setSelectedInterests] = useState([])
   const [selectedAvailability, setSelectedAvailability] = useState([])
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState('')
+  const [reference, setReference] = useState('')
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setSending(true)
+    setError('')
+    try {
+      const res = await post('/volunteers', {
+        name,
+        email,
+        interests: selectedInterests,
+        availability: selectedAvailability,
+      })
+      setReference(res.reference)
+      setSubmitted(true)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSending(false)
+    }
+  }
 
   const toggleInterest = (item) =>
     setSelectedInterests((prev) =>
@@ -264,10 +289,24 @@ export default function VolunteerCTA() {
                   </div>
 
                   <form
-                    onSubmit={(e) => { e.preventDefault(); setSubmitted(true) }}
+                    onSubmit={handleSubmit}
                     className="flex flex-col gap-3"
                     aria-label="Volunteer application form"
                   >
+                    <div>
+                      <label htmlFor="vol-name" className="sr-only">Full name</label>
+                      <input
+                        id="vol-name"
+                        type="text"
+                        required
+                        maxLength={100}
+                        autoComplete="name"
+                        placeholder="Full name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="w-full bg-canvas-elevated border border-canvas-border rounded-xl px-4 py-3.5 text-cream-DEFAULT font-body text-sm placeholder:text-fg-muted focus:border-saffron outline-none transition-colors"
+                      />
+                    </div>
                     <div>
                       <label htmlFor="vol-email" className="sr-only">Email address</label>
                       <input
@@ -282,13 +321,16 @@ export default function VolunteerCTA() {
                         aria-label="Your email address"
                       />
                     </div>
+                    {error && (
+                      <p role="alert" className="text-red-400 text-sm font-body">{error}</p>
+                    )}
                     <button
                       type="submit"
                       className="w-full bg-saffron hover:bg-saffron-light text-canvas font-body font-semibold py-3.5 rounded-xl transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-40"
-                      disabled={!email}
+                      disabled={!email || !name || sending}
                     >
-                      Send My Application
-                      <ArrowRight size={16} strokeWidth={2.5} aria-hidden="true" />
+                      {sending ? 'Sending…' : 'Send My Application'}
+                      {!sending && <ArrowRight size={16} strokeWidth={2.5} aria-hidden="true" />}
                     </button>
                     <button
                       type="button"
@@ -323,7 +365,7 @@ export default function VolunteerCTA() {
                     </p>
                   </div>
                   <div className="w-full bg-canvas-surface border border-canvas-border rounded-xl px-4 py-3">
-                    <p className="text-fg-muted text-xs font-body">Reference #{Math.floor(Math.random() * 90000) + 10000} — save this for your records.</p>
+                    <p className="text-fg-muted text-xs font-body">Reference {reference} — save this for your records.</p>
                   </div>
                 </motion.div>
               )}

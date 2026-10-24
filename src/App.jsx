@@ -6,6 +6,7 @@ import Programs from './components/Programs'
 import ImpactMap from './components/ImpactMap'
 import VolunteerCTA from './components/VolunteerCTA'
 import DonateCTA from './components/DonateCTA'
+import Contact from './components/Contact'
 import Footer from './components/Footer'
 
 /*
@@ -51,9 +52,12 @@ export default function App() {
 
         {/* 7. Donation CTA */}
         <DonateCTA />
+
+        {/* 8. Contact */}
+        <Contact />
       </main>
 
-      {/* 8. Footer */}
+      {/* 9. Footer */}
       <Footer />
     </div>
   )

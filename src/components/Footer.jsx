@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Sparkles, Twitter, Instagram, Linkedin, Youtube, Heart, Check } from 'lucide-react'
+import { post } from '../lib/api'
 
 const footerLinks = {
   'What We Do': [
@@ -31,6 +32,23 @@ const socialLinks = [
 
 export default function Footer() {
   const [newsletterDone, setNewsletterDone] = useState(false)
+  const [newsletterEmail, setNewsletterEmail] = useState('')
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleSubscribe = async (e) => {
+    e.preventDefault()
+    setSending(true)
+    setError('')
+    try {
+      await post('/subscribers', { email: newsletterEmail })
+      setNewsletterDone(true)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSending(false)
+    }
+  }
   return (
     <footer
       className="bg-canvas-DEFAULT border-t border-canvas-border pt-16 sm:pt-20 pb-10"
@@ -82,7 +100,7 @@ export default function Footer() {
               ) : (
                 <form
                   className="flex gap-2"
-                  onSubmit={(e) => { e.preventDefault(); setNewsletterDone(true) }}
+                  onSubmit={handleSubscribe}
                   aria-label="Newsletter signup"
                 >
                   <label htmlFor="footer-email" className="sr-only">Email address</label>
@@ -91,6 +109,8 @@ export default function Footer() {
                     type="email"
                     placeholder="your@email.com"
                     autoComplete="email"
+                    value={newsletterEmail}
+                    onChange={(e) => setNewsletterEmail(e.target.value)}
                     className="flex-1 min-w-0 bg-canvas-elevated border border-canvas-border rounded-lg px-4 py-2.5 text-sm text-cream-DEFAULT placeholder:text-fg-muted focus:border-saffron outline-none transition-colors font-body"
                     aria-label="Email address for newsletter"
                     required
@@ -99,11 +119,15 @@ export default function Footer() {
                     type="submit"
                     id="footer-newsletter-submit"
                     className="bg-saffron hover:bg-saffron-light text-canvas font-body font-semibold text-sm px-4 py-2.5 rounded-lg transition-colors duration-200 flex-shrink-0"
+                    disabled={sending}
                     aria-label="Subscribe to newsletter"
                   >
-                    Subscribe
+                    {sending ? '…' : 'Subscribe'}
                   </button>
                 </form>
+              )}
+              {error && (
+                <p role="alert" className="text-red-400 text-xs font-body mt-2">{error}</p>
               )}
             </div>
           </div>
