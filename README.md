@@ -76,6 +76,26 @@ flowchart TD
 
 ---
 
+## 📸 Visual Walkthrough & Platform Workings
+
+| 01. Hero & Mission Statement | 02. Interactive Geographic Impact Map |
+| :---: | :---: |
+| ![Hero Section](screenshots/01_hero_section.png) | ![Interactive Map](screenshots/02_interactive_impact_map.png) |
+
+| 03. Volunteer Onboarding Wizard | 04. Verified Volunteer Submission |
+| :---: | :---: |
+| ![Volunteer Wizard](screenshots/03_volunteer_wizard.png) | ![Volunteer Confirmed](screenshots/04_volunteer_application_confirmed.png) |
+
+| 05. Donation Pledge & Method Selector | 06. Donation Pledge Confirmation |
+| :---: | :---: |
+| ![Donation Pledge](screenshots/05_donation_pledge_checkout.png) | ![Donation Confirmed](screenshots/06_donation_pledge_confirmed.png) |
+
+| 07. CSR & General Inquiry Contact Form |
+| :---: |
+| ![Contact Inquiry](screenshots/07_contact_inquiry_sent.png) |
+
+---
+
 ## 🧭 Component & Module Breakdown
 
 ### Frontend Components (`src/components/`)
